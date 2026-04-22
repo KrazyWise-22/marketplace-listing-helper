@@ -503,11 +503,12 @@ export default function Home() {
             Turn rough item details into a cleaner listing
           </h1>
           <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base lg:text-lg lg:max-w-none">
-            Enter basic item details, then generate and copy a cleaner listing.
-            <p className="mt-2 text-xs text-slate-400 sm:text-sm">
+  Enter basic item details, then generate and copy a cleaner listing.
+</p>
+
+<p className="mt-2 text-xs text-slate-400 sm:text-sm">
   This is Version 1 of the app and is currently being tested. Feedback would be much appreciated!
 </p>
-          </p>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-2 lg:gap-6">
