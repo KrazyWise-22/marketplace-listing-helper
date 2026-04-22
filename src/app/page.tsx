@@ -39,18 +39,18 @@ const initialForm: FormData = {
 
 const initialListing: ListingOutput = {
   title: "Your generated title will appear here",
-  price: "$0",
+  price: "_",
   priceTiers: {
-    quickSale: "$0",
-    balanced: "$0",
-    maxValue: "$0",
+    quickSale: "_",
+    balanced: "_",
+    maxValue: "_",
   },
-  category: "Category will appear here",
+  category: "Category auto-detected",
   description: "Your generated description will appear here.",
   tips: [
     "Add at least 3 clear photos.",
-    "Mention pickup or delivery details.",
-    "Be honest about flaws.",
+    "Clearly state pickup or delivery options.",
+    "Be upfront about any flaws.",
   ],
 };
 
@@ -504,6 +504,9 @@ export default function Home() {
           </h1>
           <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base lg:text-lg lg:max-w-none">
             Enter basic item details, then generate and copy a cleaner listing.
+            <p className="mt-2 text-xs text-slate-400 sm:text-sm">
+  This is Version 1 of the app and is currently being tested. Feedback would be much appreciated!
+</p>
           </p>
         </header>
 
