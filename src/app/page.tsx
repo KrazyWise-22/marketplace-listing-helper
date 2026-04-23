@@ -1043,7 +1043,7 @@ export default function Home() {
                 </pre>
               </div>
 
-              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleRegenerateDescription}
@@ -1055,10 +1055,10 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className={`w-full rounded-xl border px-4 py-3 font-semibold transition active:scale-[0.99] ${
+                  className={`w-full rounded-xl px-4 py-3 font-semibold transition active:scale-[0.99] ${
                     copied
-                      ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                      : "border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-slate-950"
+                      ? "bg-emerald-400 text-slate-950"
+                      : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
                   }`}
                 >
                   {copied ? "Copied ✓" : "Copy Full Listing"}
