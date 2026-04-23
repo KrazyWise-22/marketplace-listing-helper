@@ -519,16 +519,28 @@ export default function Home() {
     const description = buildPlatformDescription(form, variation, category);
     const tips = buildTips(form, category);
 
-    const nextListingBase = {
-      title,
-      price,
-      priceTiers,
-      category,
-      description,
-      tips,
-    };
+    const copyPreview = buildCopyPreview(
+  {
+    title,
+    price,
+    priceTiers,
+    category,
+    description,
+    tips,
+    copyPreview: "",
+  },
+  form.platform,
+);
 
-    const copyPreview = buildCopyPreview(nextListingBase, form.platform);
+const nextListingBase = {
+  title,
+  price,
+  priceTiers,
+  category,
+  description,
+  tips,
+  copyPreview,
+};
 
     return {
       ...nextListingBase,
@@ -908,7 +920,7 @@ export default function Home() {
                 <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-400 sm:text-xs">
                   {getPlatformLabel(form.platform)} copy preview
                 </p>
-                <pre className="overflow-x-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-300 sm:leading-7">
+                <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-300 sm:leading-7">
                   {listing.copyPreview}
                 </pre>
               </div>
