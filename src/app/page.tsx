@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Platform = "facebook" | "craigslist" | "ebay" | "offerup";
+
 type VariationOption = {
   label: string;
   description: string;
@@ -410,7 +411,7 @@ function buildPlatformDescription(
     ],
   ];
 
-  return offerUpVariants[variation % offerUpVariants.length].filter(Boolean).join(" ");
+  return offerUpVariants[variation % variants.length].filter(Boolean).join(" ");
 }
 
 function buildTips(form: FormData, category: string): string[] {
@@ -517,15 +518,55 @@ function buildVariations(baseListing: ListingOutput): VariationOption[] {
   ];
 }
 
+function encodeListingData(data: ListingOutput, platform: Platform): string {
+  const payload = {
+    listing: data,
+    platform,
+  };
+
+  return encodeURIComponent(JSON.stringify(payload));
+}
+
+function decodeListingData(
+  value: string,
+): { listing: ListingOutput; platform: Platform } | null {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(value));
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [listing, setListing] = useState<ListingOutput>(initialListing);
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [selectedTier, setSelectedTier] = useState<"quick" | "balanced" | "max">(
     "balanced",
   );
   const [descriptionVariation, setDescriptionVariation] = useState(0);
   const [variations, setVariations] = useState<VariationOption[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const sharedValue = params.get("share");
+
+    if (!sharedValue) return;
+
+    const decoded = decodeListingData(sharedValue);
+    if (!decoded) return;
+
+    setListing(decoded.listing);
+    setForm((prev) => ({
+      ...prev,
+      platform: decoded.platform,
+    }));
+    setVariations(buildVariations(decoded.listing));
+  }, []);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({
@@ -562,18 +603,13 @@ export default function Home() {
       form.platform,
     );
 
-    const nextListingBase = {
+    return {
       title,
       price,
       priceTiers,
       category,
       description,
       tips,
-      copyPreview,
-    };
-
-    return {
-      ...nextListingBase,
       copyPreview,
     };
   }
@@ -591,6 +627,7 @@ export default function Home() {
     setListing(result);
     setVariations(buildVariations(result));
     setCopied(false);
+    setShareCopied(false);
   }
 
   function handleRegenerateDescription() {
@@ -601,6 +638,7 @@ export default function Home() {
     setListing(nextListing);
     setVariations(buildVariations(nextListing));
     setCopied(false);
+    setShareCopied(false);
   }
 
   function handleSelectTier(tier: "quick" | "balanced" | "max") {
@@ -608,6 +646,7 @@ export default function Home() {
     const nextListing = buildListing(descriptionVariation, tier);
     setListing(nextListing);
     setVariations(buildVariations(nextListing));
+    setShareCopied(false);
   }
 
   function handleApplyVariation(nextDescription: string) {
@@ -624,17 +663,22 @@ export default function Home() {
       form.platform,
     );
 
-    setListing({
+    const finalListing = {
       ...nextListing,
       copyPreview: updatedCopyPreview,
-    });
+    };
+
+    setListing(finalListing);
+    setVariations(buildVariations(finalListing));
     setCopied(false);
+    setShareCopied(false);
   }
 
   function handleReset() {
     setForm(initialForm);
     setListing(initialListing);
     setCopied(false);
+    setShareCopied(false);
     setSelectedTier("balanced");
     setDescriptionVariation(0);
     setVariations([]);
@@ -649,18 +693,30 @@ export default function Home() {
     }, 1500);
   }
 
+  async function handleShare() {
+    const encoded = encodeListingData(listing, form.platform);
+    const shareUrl = `${window.location.origin}?share=${encoded}`;
+
+    await navigator.clipboard.writeText(shareUrl);
+    setShareCopied(true);
+
+    setTimeout(() => {
+      setShareCopied(false);
+    }, 1500);
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <header className="mb-6 text-center sm:mb-8 lg:text-left">
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-emerald-400 sm:text-sm">
-            Marketplace Listing Helper
+            ZipList
           </p>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Turn rough item details into a cleaner listing
           </h1>
           <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base lg:max-w-none lg:text-lg">
-            Enter basic item details, then generate and copy a cleaner listing.
+            Create cleaner listings fast, compare versions, and share them instantly.
           </p>
           <p className="mt-2 text-xs text-slate-400 sm:text-sm">
             Version 1 — currently being tested. Feedback is welcome.
@@ -856,7 +912,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <button
                   type="button"
                   onClick={handleRegenerateDescription}
@@ -871,6 +927,14 @@ export default function Home() {
                   className="w-full rounded-xl border border-emerald-400 px-4 py-2 font-semibold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
                 >
                   {copied ? "Copied!" : "Copy Full Listing"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="w-full rounded-xl border border-sky-400 px-4 py-2 font-semibold text-sky-400 transition hover:bg-sky-400 hover:text-slate-950"
+                >
+                  {shareCopied ? "Share Link Copied!" : "Share Listing"}
                 </button>
               </div>
             </div>
