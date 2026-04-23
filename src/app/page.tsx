@@ -410,6 +410,7 @@ function buildPlatformDescription(
       "First serious message gets it.",
     ],
   ];
+
   return offerUpVariants[variation % offerUpVariants.length].filter(Boolean).join(" ");
 }
 
@@ -549,27 +550,27 @@ export default function Home() {
   const [variations, setVariations] = useState<VariationOption[]>([]);
 
   useEffect(() => {
-  if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
 
-  const params = new URLSearchParams(window.location.search);
-  const sharedValue = params.get("share");
+    const params = new URLSearchParams(window.location.search);
+    const sharedValue = params.get("share");
 
-  if (!sharedValue) return;
+    if (!sharedValue) return;
 
-  const decoded = decodeListingData(sharedValue);
-  if (!decoded) return;
+    const decoded = decodeListingData(sharedValue);
+    if (!decoded) return;
 
-  const timer = setTimeout(() => {
-    setListing(decoded.listing);
-    setForm((prev) => ({
-      ...prev,
-      platform: decoded.platform,
-    }));
-    setVariations(buildVariations(decoded.listing));
-  }, 0);
+    const timer = setTimeout(() => {
+      setListing(decoded.listing);
+      setForm((prev) => ({
+        ...prev,
+        platform: decoded.platform,
+      }));
+      setVariations(buildVariations(decoded.listing));
+    }, 0);
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({
@@ -693,7 +694,7 @@ export default function Home() {
 
     setTimeout(() => {
       setCopied(false);
-    }, 1500);
+    }, 1400);
   }
 
   async function handleShare() {
@@ -705,7 +706,7 @@ export default function Home() {
 
     setTimeout(() => {
       setShareCopied(false);
-    }, 1500);
+    }, 1400);
   }
 
   return (
@@ -907,38 +908,12 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl sm:p-6">
-            <div className="mb-5 flex flex-col gap-3 sm:mb-6">
+            <div className="mb-5">
               <div>
                 <h2 className="text-xl font-semibold sm:text-2xl">Generated Listing</h2>
                 <p className="mt-2 text-sm text-slate-400">
                   Optimized for {getPlatformLabel(form.platform)}.
                 </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <button
-                  type="button"
-                  onClick={handleRegenerateDescription}
-                  className="w-full rounded-xl border border-slate-600 px-4 py-2 font-semibold text-slate-200 transition hover:bg-slate-800"
-                >
-                  Regenerate Description
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="w-full rounded-xl border border-emerald-400 px-4 py-2 font-semibold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
-                >
-                  {copied ? "Copied!" : "Copy Full Listing"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="w-full rounded-xl border border-sky-400 px-4 py-2 font-semibold text-sky-400 transition hover:bg-sky-400 hover:text-slate-950"
-                >
-                  {shareCopied ? "Share Link Copied!" : "Share Listing"}
-                </button>
               </div>
             </div>
 
@@ -1066,6 +1041,40 @@ export default function Home() {
                 <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-300 sm:leading-7">
                   {listing.copyPreview}
                 </pre>
+              </div>
+
+              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={handleRegenerateDescription}
+                  className="w-full rounded-xl border border-slate-600 px-4 py-3 font-semibold text-slate-200 transition hover:bg-slate-800 active:scale-[0.99]"
+                >
+                  Regenerate Description
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`w-full rounded-xl border px-4 py-3 font-semibold transition active:scale-[0.99] ${
+                    copied
+                      ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                      : "border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-slate-950"
+                  }`}
+                >
+                  {copied ? "Copied ✓" : "Copy Full Listing"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className={`w-full rounded-xl border px-4 py-3 font-semibold transition active:scale-[0.99] ${
+                    shareCopied
+                      ? "border-sky-400 bg-sky-400 text-slate-950"
+                      : "border-sky-400 text-sky-400 hover:bg-sky-400 hover:text-slate-950"
+                  }`}
+                >
+                  {shareCopied ? "Link Copied ✓" : "Share Listing"}
+                </button>
               </div>
             </div>
           </div>
