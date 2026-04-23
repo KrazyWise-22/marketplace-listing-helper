@@ -410,8 +410,7 @@ function buildPlatformDescription(
       "First serious message gets it.",
     ],
   ];
-
-  return offerUpVariants[variation % variants.length].filter(Boolean).join(" ");
+  return offerUpVariants[variation % offerUpVariants.length].filter(Boolean).join(" ");
 }
 
 function buildTips(form: FormData, category: string): string[] {
@@ -550,23 +549,27 @@ export default function Home() {
   const [variations, setVariations] = useState<VariationOption[]>([]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
 
-    const params = new URLSearchParams(window.location.search);
-    const sharedValue = params.get("share");
+  const params = new URLSearchParams(window.location.search);
+  const sharedValue = params.get("share");
 
-    if (!sharedValue) return;
+  if (!sharedValue) return;
 
-    const decoded = decodeListingData(sharedValue);
-    if (!decoded) return;
+  const decoded = decodeListingData(sharedValue);
+  if (!decoded) return;
 
+  const timer = setTimeout(() => {
     setListing(decoded.listing);
     setForm((prev) => ({
       ...prev,
       platform: decoded.platform,
     }));
     setVariations(buildVariations(decoded.listing));
-  }, []);
+  }, 0);
+
+  return () => clearTimeout(timer);
+}, []);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({
