@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+type Platform = "facebook" | "craigslist" | "ebay" | "offerup";
+
 type FormData = {
   itemName: string;
   brand: string;
@@ -9,6 +11,7 @@ type FormData = {
   originalPrice: string;
   sellSpeed: string;
   listingStyle: string;
+  platform: Platform;
   details: string;
 };
 
@@ -25,6 +28,7 @@ type ListingOutput = {
   category: string;
   description: string;
   tips: string[];
+  copyPreview: string;
 };
 
 const initialForm: FormData = {
@@ -34,16 +38,17 @@ const initialForm: FormData = {
   originalPrice: "",
   sellSpeed: "",
   listingStyle: "Professional",
+  platform: "facebook",
   details: "",
 };
 
 const initialListing: ListingOutput = {
   title: "Your generated title will appear here",
-  price: "_",
+  price: "—",
   priceTiers: {
-    quickSale: "_",
-    balanced: "_",
-    maxValue: "_",
+    quickSale: "—",
+    balanced: "—",
+    maxValue: "—",
   },
   category: "Category auto-detected",
   description: "Your generated description will appear here.",
@@ -52,6 +57,11 @@ const initialListing: ListingOutput = {
     "Clearly state pickup or delivery options.",
     "Be upfront about any flaws.",
   ],
+  copyPreview: `Your generated title will appear here
+
+Price: —
+
+Your generated description will appear here.`,
 };
 
 function parsePrice(value: string): number {
@@ -101,7 +111,10 @@ function detectCategory(itemName: string, details: string, brand: string): strin
     text.includes("iphone") ||
     text.includes("samsung") ||
     text.includes("tablet") ||
-    text.includes("ipad")
+    text.includes("ipad") ||
+    text.includes("console") ||
+    text.includes("playstation") ||
+    text.includes("xbox")
   ) {
     return "Electronics";
   }
@@ -142,13 +155,18 @@ function detectCategory(itemName: string, details: string, brand: string): strin
   return "General";
 }
 
-function buildTitle(form: FormData): string {
+function buildTitle(form: FormData, platform: Platform): string {
   const displayName = buildDisplayName(form);
   const condition = form.condition.trim();
 
   if (!displayName || displayName === "item") {
-    if (condition) return `Used Item - ${condition}`;
+    if (condition) return platform === "ebay" ? `Used Item - ${condition}` : `Used Item - ${condition}`;
     return "Untitled Listing";
+  }
+
+  if (platform === "ebay") {
+    if (condition) return `${displayName} ${condition}`.replace(/\s+/g, " ").trim();
+    return displayName;
   }
 
   if (!condition) {
@@ -171,6 +189,7 @@ function guessBasePrice(itemName: string, category: string, brand: string): numb
   if (text.includes("phone") || text.includes("iphone")) return 180;
   if (text.includes("monitor")) return 100;
   if (text.includes("tablet") || text.includes("ipad")) return 140;
+  if (text.includes("playstation") || text.includes("ps5") || text.includes("xbox")) return 250;
 
   if (text.includes("couch") || text.includes("sofa")) return 150;
   if (text.includes("dresser")) return 120;
@@ -277,7 +296,7 @@ function buildDetailsFallback(displayName: string, category: string): string {
   return "Available now and ready for pickup or delivery details to be discussed.";
 }
 
-function buildDescription(
+function buildPlatformDescription(
   form: FormData,
   variation: number,
   category: string,
@@ -285,57 +304,91 @@ function buildDescription(
   const displayName = buildDisplayName(form);
   const condition = form.condition.trim();
   const details = ensurePeriod(form.details);
-  const style = form.listingStyle || "Professional";
-
-  const intro = buildIntro(displayName, condition);
   const fallbackDetails = buildDetailsFallback(displayName, category);
+  const platform = form.platform;
+  const style = form.listingStyle || "Professional";
+  const intro = buildIntro(displayName, condition);
 
-  const professionalVariants = [
-    [
-      intro,
-      details || fallbackDetails,
-      "Message me if you have any questions.",
-    ],
-    [
-      displayName === "item" ? "Selling this item." : `Selling this ${displayName}.`,
-      condition ? `It is in ${condition.toLowerCase()} condition.` : "",
-      details || "Everything works as it should.",
-      "Feel free to reach out with any questions.",
-    ],
-    [
-      displayName === "item" ? "Item available now." : `${displayName} available now.`,
-      condition ? `Condition is ${condition.toLowerCase()}.` : "",
-      details || "Clean and ready for its next owner.",
-      "Send a message if interested.",
-    ],
-  ];
+  if (platform === "facebook") {
+    const variants = [
+      [
+        intro,
+        details || fallbackDetails,
+        style === "Fast sale" ? "Priced to sell." : "",
+        "Message me if interested.",
+      ],
+      [
+        displayName === "item" ? "Nice item for sale." : `Nice ${displayName}.`,
+        condition ? `It is in ${condition.toLowerCase()} condition.` : "",
+        details || fallbackDetails,
+        "Send me a message if you want it.",
+      ],
+      [
+        displayName === "item" ? "Available now." : `${displayName} available now.`,
+        details || fallbackDetails,
+        style === "Fast sale" ? "Trying to move it quickly." : "",
+        "Feel free to reach out.",
+      ],
+    ];
 
-  const friendlyVariants = [
-    [
-      displayName === "item" ? "Nice item for sale." : `Nice ${displayName}.`,
-      condition ? `It is in ${condition.toLowerCase()} condition.` : "",
-      details || fallbackDetails,
-      "Feel free to message me if you are interested.",
-    ],
-    [
-      displayName === "item" ? "Really solid item." : `Really solid ${displayName}.`,
-      condition ? `Still in ${condition.toLowerCase()} condition.` : "",
-      details || "Ready to go and works well.",
-      "Just send me a message if you want it.",
-    ],
-    [
-      displayName === "item" ? "Item up for sale." : `${displayName} up for sale.`,
-      condition ? `It is in ${condition.toLowerCase()} condition.` : "",
-      details || "Good working item and ready for a new home.",
-      "Message me anytime if interested.",
-    ],
-  ];
+    return variants[variation % variants.length].filter(Boolean).join(" ");
+  }
 
-  const fastSaleVariants = [
+  if (platform === "craigslist") {
+    const variants = [
+      [
+        displayName === "item" ? "Item for sale." : `${displayName} for sale.`,
+        condition ? `Condition: ${condition}.` : "",
+        details || fallbackDetails,
+        "Please message with any questions.",
+      ],
+      [
+        displayName === "item" ? "Used item available." : `${displayName} available.`,
+        condition ? `${condition} condition.` : "",
+        details || fallbackDetails,
+        "Pickup or delivery details can be discussed.",
+      ],
+      [
+        displayName === "item" ? "Selling a used item." : `Selling ${displayName}.`,
+        condition ? `It is in ${condition.toLowerCase()} condition.` : "",
+        details || fallbackDetails,
+        "Serious inquiries only.",
+      ],
+    ];
+
+    return variants[variation % variants.length].filter(Boolean).join(" ");
+  }
+
+  if (platform === "ebay") {
+    const variants = [
+      [
+        displayName === "item" ? "Pre-owned item." : `${displayName}.`,
+        condition ? `Condition: ${condition}.` : "",
+        details || fallbackDetails,
+        "Please review the listing details carefully before purchase.",
+      ],
+      [
+        displayName === "item" ? "Item available for sale." : `${displayName} available for sale.`,
+        condition ? `This item is listed as ${condition.toLowerCase()}.` : "",
+        details || fallbackDetails,
+        "Message with any questions.",
+      ],
+      [
+        displayName === "item" ? "Pre-owned item in good working order." : `${displayName} in solid condition.`,
+        condition ? `Rated ${condition.toLowerCase()}.` : "",
+        details || fallbackDetails,
+        "See full details in the listing description.",
+      ],
+    ];
+
+    return variants[variation % variants.length].filter(Boolean).join(" ");
+  }
+
+  const offerUpVariants = [
     [
       intro,
       details || "Works great and ready to go.",
-      "Priced to sell.",
+      "Fast sale preferred.",
       "Message me if interested.",
     ],
     [
@@ -343,25 +396,15 @@ function buildDescription(
       condition ? `${condition} condition.` : "",
       details || "Works well and ready for pickup.",
       "Need it gone soon.",
-      "Send a message if you want it.",
     ],
     [
-      displayName === "item" ? "Item available now." : `${displayName} available now.`,
-      condition ? `Still in ${condition.toLowerCase()} condition.` : "",
+      displayName === "item" ? "Available now." : `${displayName} available now.`,
       details || "Good working condition and ready to use.",
-      "Fast sale preferred.",
       "First serious message gets it.",
     ],
   ];
 
-  const variants =
-    style === "Friendly"
-      ? friendlyVariants
-      : style === "Fast sale"
-        ? fastSaleVariants
-        : professionalVariants;
-
-  return variants[variation % variants.length].filter(Boolean).join(" ");
+  return offerUpVariants[variation % offerUpVariants.length].filter(Boolean).join(" ");
 }
 
 function buildTips(form: FormData, category: string): string[] {
@@ -387,7 +430,9 @@ function buildTips(form: FormData, category: string): string[] {
     tips.push("Add the condition for a more accurate price suggestion.");
   }
 
-  if (category === "Electronics") {
+  if (form.platform === "ebay") {
+    tips.push("Include model number, storage, or exact specs for buyer confidence.");
+  } else if (category === "Electronics") {
     tips.push("Include model number, screen size, or storage details.");
   } else if (category === "Furniture") {
     tips.push("Include dimensions and any visible wear.");
@@ -400,12 +445,47 @@ function buildTips(form: FormData, category: string): string[] {
   return tips.slice(0, 4);
 }
 
-function buildCopyText(listing: ListingOutput): string {
+function buildCopyPreview(listing: ListingOutput, platform: Platform): string {
+  if (platform === "craigslist") {
+    return `${listing.title}
+
+Price: ${listing.price}
+Category: ${listing.category}
+
+Description:
+${listing.description}`;
+  }
+
+  if (platform === "ebay") {
+    return `${listing.title}
+
+Price: ${listing.price}
+
+Condition: ${listing.category === "Category auto-detected" ? "See details" : "See listing details"}
+
+${listing.description}`;
+  }
+
   return `${listing.title}
 
 Price: ${listing.price}
 
 ${listing.description}`;
+}
+
+function getPlatformLabel(platform: Platform): string {
+  switch (platform) {
+    case "facebook":
+      return "Facebook Marketplace";
+    case "craigslist":
+      return "Craigslist";
+    case "ebay":
+      return "eBay";
+    case "offerup":
+      return "OfferUp";
+    default:
+      return "Platform";
+  }
 }
 
 export default function Home() {
@@ -424,11 +504,39 @@ export default function Home() {
     }));
   }
 
-  function handleGenerate() {
+  function buildListing(variation: number, tier: "quick" | "balanced" | "max") {
     const category = detectCategory(form.itemName, form.details, form.brand);
-    const title = buildTitle(form);
     const priceTiers = buildPriceTiers(form, category);
 
+    const price =
+      tier === "quick"
+        ? priceTiers.quickSale
+        : tier === "max"
+          ? priceTiers.maxValue
+          : priceTiers.balanced;
+
+    const title = buildTitle(form, form.platform);
+    const description = buildPlatformDescription(form, variation, category);
+    const tips = buildTips(form, category);
+
+    const nextListingBase = {
+      title,
+      price,
+      priceTiers,
+      category,
+      description,
+      tips,
+    };
+
+    const copyPreview = buildCopyPreview(nextListingBase, form.platform);
+
+    return {
+      ...nextListingBase,
+      copyPreview,
+    };
+  }
+
+  function handleGenerate() {
     let defaultTier: "quick" | "balanced" | "max" = "balanced";
 
     if (form.sellSpeed === "Fast sale") defaultTier = "quick";
@@ -437,39 +545,24 @@ export default function Home() {
     setSelectedTier(defaultTier);
     setDescriptionVariation(0);
 
-    const price =
-      defaultTier === "quick"
-        ? priceTiers.quickSale
-        : defaultTier === "max"
-          ? priceTiers.maxValue
-          : priceTiers.balanced;
-
-    const description = buildDescription(form, 0, category);
-    const tips = buildTips(form, category);
-
-    setListing({
-      title,
-      price,
-      priceTiers,
-      category,
-      description,
-      tips,
-    });
-
+    const nextListing = buildListing(0, defaultTier);
+    setListing(nextListing);
     setCopied(false);
   }
 
   function handleRegenerateDescription() {
-    const category = detectCategory(form.itemName, form.details, form.brand);
     const nextVariation = descriptionVariation + 1;
     setDescriptionVariation(nextVariation);
 
-    setListing((prev) => ({
-      ...prev,
-      description: buildDescription(form, nextVariation, category),
-    }));
-
+    const nextListing = buildListing(nextVariation, selectedTier);
+    setListing(nextListing);
     setCopied(false);
+  }
+
+  function handleSelectTier(tier: "quick" | "balanced" | "max") {
+    setSelectedTier(tier);
+    const nextListing = buildListing(descriptionVariation, tier);
+    setListing(nextListing);
   }
 
   function handleReset() {
@@ -481,16 +574,13 @@ export default function Home() {
   }
 
   async function handleCopy() {
-    const textToCopy = buildCopyText(listing);
-    await navigator.clipboard.writeText(textToCopy);
+    await navigator.clipboard.writeText(listing.copyPreview);
     setCopied(true);
 
     setTimeout(() => {
       setCopied(false);
     }, 1500);
   }
-
-  const fullListingText = buildCopyText(listing);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -502,13 +592,12 @@ export default function Home() {
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Turn rough item details into a cleaner listing
           </h1>
-          <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base lg:text-lg lg:max-w-none">
-  Enter basic item details, then generate and copy a cleaner listing.
-</p>
-
-<p className="mt-2 text-xs text-slate-400 sm:text-sm">
-  This is Version 1 of the app and is currently being tested. Feedback would be much appreciated!
-</p>
+          <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base lg:max-w-none lg:text-lg">
+            Enter basic item details, then generate and copy a cleaner listing.
+          </p>
+          <p className="mt-2 text-xs text-slate-400 sm:text-sm">
+            Version 1 — currently being tested. Feedback is welcome.
+          </p>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-2 lg:gap-6">
@@ -540,6 +629,7 @@ export default function Home() {
                 </label>
                 <input
                   id="itemName"
+                  autoFocus
                   type="text"
                   value={form.itemName}
                   onChange={(e) => updateField("itemName", e.target.value)}
@@ -553,7 +643,7 @@ export default function Home() {
                   htmlFor="brand"
                   className="mb-2 block text-sm font-medium text-slate-200"
                 >
-                  Brand
+                  Brand (optional)
                 </label>
                 <input
                   id="brand"
@@ -592,7 +682,7 @@ export default function Home() {
                   htmlFor="originalPrice"
                   className="mb-2 block text-sm font-medium text-slate-200"
                 >
-                  Original price
+                  Original price (optional)
                 </label>
                 <input
                   id="originalPrice"
@@ -645,6 +735,26 @@ export default function Home() {
 
               <div>
                 <label
+                  htmlFor="platform"
+                  className="mb-2 block text-sm font-medium text-slate-200"
+                >
+                  Posting platform
+                </label>
+                <select
+                  id="platform"
+                  value={form.platform}
+                  onChange={(e) => updateField("platform", e.target.value as Platform)}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-emerald-400 sm:text-base"
+                >
+                  <option value="facebook">Facebook Marketplace</option>
+                  <option value="craigslist">Craigslist</option>
+                  <option value="ebay">eBay</option>
+                  <option value="offerup">OfferUp</option>
+                </select>
+              </div>
+
+              <div>
+                <label
                   htmlFor="details"
                   className="mb-2 block text-sm font-medium text-slate-200"
                 >
@@ -675,7 +785,7 @@ export default function Home() {
               <div>
                 <h2 className="text-xl font-semibold sm:text-2xl">Generated Listing</h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  Generate it, then copy it.
+                  Optimized for {getPlatformLabel(form.platform)}.
                 </p>
               </div>
 
@@ -719,14 +829,8 @@ export default function Home() {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div
-                  onClick={() => {
-                    setSelectedTier("quick");
-                    setListing((prev) => ({
-                      ...prev,
-                      price: prev.priceTiers.quickSale,
-                    }));
-                  }}
-                  className={`cursor-pointer rounded-xl border p-5 sm:p-4 transition ${
+                  onClick={() => handleSelectTier("quick")}
+                  className={`cursor-pointer rounded-xl border p-5 transition sm:p-4 ${
                     selectedTier === "quick"
                       ? "border-emerald-400 bg-slate-900"
                       : "border-slate-800 bg-slate-950"
@@ -741,14 +845,8 @@ export default function Home() {
                 </div>
 
                 <div
-                  onClick={() => {
-                    setSelectedTier("balanced");
-                    setListing((prev) => ({
-                      ...prev,
-                      price: prev.priceTiers.balanced,
-                    }));
-                  }}
-                  className={`cursor-pointer rounded-xl border p-5 sm:p-4 transition ${
+                  onClick={() => handleSelectTier("balanced")}
+                  className={`cursor-pointer rounded-xl border p-5 transition sm:p-4 ${
                     selectedTier === "balanced"
                       ? "border-emerald-400 bg-slate-900"
                       : "border-slate-800 bg-slate-950"
@@ -763,14 +861,8 @@ export default function Home() {
                 </div>
 
                 <div
-                  onClick={() => {
-                    setSelectedTier("max");
-                    setListing((prev) => ({
-                      ...prev,
-                      price: prev.priceTiers.maxValue,
-                    }));
-                  }}
-                  className={`cursor-pointer rounded-xl border p-5 sm:p-4 transition ${
+                  onClick={() => handleSelectTier("max")}
+                  className={`cursor-pointer rounded-xl border p-5 transition sm:p-4 ${
                     selectedTier === "max"
                       ? "border-emerald-400 bg-slate-900"
                       : "border-slate-800 bg-slate-950"
@@ -814,10 +906,10 @@ export default function Home() {
 
               <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                 <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-400 sm:text-xs">
-                  Marketplace copy preview
+                  {getPlatformLabel(form.platform)} copy preview
                 </p>
-                <pre className="overflow-x-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-300 sm:text-sm sm:leading-7">
-                  {fullListingText}
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-300 sm:leading-7">
+                  {listing.copyPreview}
                 </pre>
               </div>
             </div>
