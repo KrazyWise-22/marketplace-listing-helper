@@ -3,6 +3,10 @@
 import { useState } from "react";
 
 type Platform = "facebook" | "craigslist" | "ebay" | "offerup";
+type VariationOption = {
+  label: string;
+  description: string;
+};
 
 type FormData = {
   itemName: string;
@@ -160,7 +164,7 @@ function buildTitle(form: FormData, platform: Platform): string {
   const condition = form.condition.trim();
 
   if (!displayName || displayName === "item") {
-    if (condition) return platform === "ebay" ? `Used Item - ${condition}` : `Used Item - ${condition}`;
+    if (condition) return `Used Item - ${condition}`;
     return "Untitled Listing";
   }
 
@@ -189,7 +193,9 @@ function guessBasePrice(itemName: string, category: string, brand: string): numb
   if (text.includes("phone") || text.includes("iphone")) return 180;
   if (text.includes("monitor")) return 100;
   if (text.includes("tablet") || text.includes("ipad")) return 140;
-  if (text.includes("playstation") || text.includes("ps5") || text.includes("xbox")) return 250;
+  if (text.includes("playstation") || text.includes("ps5") || text.includes("xbox")) {
+    return 250;
+  }
 
   if (text.includes("couch") || text.includes("sofa")) return 150;
   if (text.includes("dresser")) return 120;
@@ -488,6 +494,29 @@ function getPlatformLabel(platform: Platform): string {
   }
 }
 
+function buildVariations(baseListing: ListingOutput): VariationOption[] {
+  const cleanedDescription = baseListing.description.trim();
+
+  return [
+    {
+      label: "⚡ Faster sale",
+      description: `${cleanedDescription} Priced to move quickly.`,
+    },
+    {
+      label: "💰 Higher value",
+      description: `${cleanedDescription} Great value for the condition and price.`,
+    },
+    {
+      label: "🔥 More persuasive",
+      description: `${cleanedDescription} Solid deal for someone who wants a dependable item.`,
+    },
+    {
+      label: "😎 More casual",
+      description: `${cleanedDescription} Just message me if you're interested.`,
+    },
+  ];
+}
+
 export default function Home() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [listing, setListing] = useState<ListingOutput>(initialListing);
@@ -496,6 +525,7 @@ export default function Home() {
     "balanced",
   );
   const [descriptionVariation, setDescriptionVariation] = useState(0);
+  const [variations, setVariations] = useState<VariationOption[]>([]);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({
@@ -520,27 +550,27 @@ export default function Home() {
     const tips = buildTips(form, category);
 
     const copyPreview = buildCopyPreview(
-  {
-    title,
-    price,
-    priceTiers,
-    category,
-    description,
-    tips,
-    copyPreview: "",
-  },
-  form.platform,
-);
+      {
+        title,
+        price,
+        priceTiers,
+        category,
+        description,
+        tips,
+        copyPreview: "",
+      },
+      form.platform,
+    );
 
-const nextListingBase = {
-  title,
-  price,
-  priceTiers,
-  category,
-  description,
-  tips,
-  copyPreview,
-};
+    const nextListingBase = {
+      title,
+      price,
+      priceTiers,
+      category,
+      description,
+      tips,
+      copyPreview,
+    };
 
     return {
       ...nextListingBase,
@@ -557,8 +587,9 @@ const nextListingBase = {
     setSelectedTier(defaultTier);
     setDescriptionVariation(0);
 
-    const nextListing = buildListing(0, defaultTier);
-    setListing(nextListing);
+    const result = buildListing(0, defaultTier);
+    setListing(result);
+    setVariations(buildVariations(result));
     setCopied(false);
   }
 
@@ -568,6 +599,7 @@ const nextListingBase = {
 
     const nextListing = buildListing(nextVariation, selectedTier);
     setListing(nextListing);
+    setVariations(buildVariations(nextListing));
     setCopied(false);
   }
 
@@ -575,6 +607,28 @@ const nextListingBase = {
     setSelectedTier(tier);
     const nextListing = buildListing(descriptionVariation, tier);
     setListing(nextListing);
+    setVariations(buildVariations(nextListing));
+  }
+
+  function handleApplyVariation(nextDescription: string) {
+    const nextListing = {
+      ...listing,
+      description: nextDescription,
+    };
+
+    const updatedCopyPreview = buildCopyPreview(
+      {
+        ...nextListing,
+        copyPreview: "",
+      },
+      form.platform,
+    );
+
+    setListing({
+      ...nextListing,
+      copyPreview: updatedCopyPreview,
+    });
+    setCopied(false);
   }
 
   function handleReset() {
@@ -583,6 +637,7 @@ const nextListingBase = {
     setCopied(false);
     setSelectedTier("balanced");
     setDescriptionVariation(0);
+    setVariations([]);
   }
 
   async function handleCopy() {
@@ -888,6 +943,27 @@ const nextListingBase = {
                   </p>
                 </div>
               </div>
+
+              {variations.length > 0 ? (
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <p className="mb-3 text-[11px] uppercase tracking-wide text-slate-400 sm:text-xs">
+                    Try different versions
+                  </p>
+
+                  <div className="grid gap-3">
+                    {variations.map((variation) => (
+                      <button
+                        key={variation.label}
+                        type="button"
+                        onClick={() => handleApplyVariation(variation.description)}
+                        className="w-full rounded-xl border border-slate-700 px-4 py-3 text-left text-sm font-medium text-slate-200 transition hover:border-emerald-400 hover:bg-slate-900 sm:text-base"
+                      >
+                        {variation.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                 <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-400 sm:text-xs">
