@@ -27,18 +27,42 @@ export async function POST(req: Request) {
 
     const response = await openai.responses.create({
       model: "gpt-5",
-      input: `Identify this marketplace item:
+      input: `
+You are a product identification engine.
 
+Analyze the following marketplace item.
+
+Item:
 ${itemName}
 
-Return JSON only:
+Return ONLY valid JSON.
+
 {
+  "productName": "",
   "brand": "",
+  "model": "",
   "category": "",
-  "productType": "",
+  "subcategory": "",
+  "conditionAssumption": "Unknown",
+  "estimatedRetailLow": 0,
+  "estimatedRetailHigh": 0,
+  "confidence": 0,
   "specifications": [],
-  "estimatedRetailRange": ""
-}`
+  "summary": ""
+}
+
+Rules:
+
+- Never explain.
+- Never use markdown.
+- Never wrap the JSON in code fences.
+- If the brand is unknown, use null.
+- If the model is unknown, use null.
+- Confidence must be between 0 and 1.
+- Retail values must be numbers.
+- Specifications should be short bullet-style strings.
+- Summary should be one concise paragraph describing what the product is and what it does.
+`
     });
 
     return NextResponse.json({

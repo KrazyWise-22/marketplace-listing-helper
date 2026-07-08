@@ -1,9 +1,25 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- Local object URL previews are not optimized by next/image. */
+
+import {
+  parseAskingPrice,
+  roundToFive,
+  money,
+  formatExactMoney,
+} from "../utils/money";
+
 import { useState } from "react";
 
-import { findProduct } from "../data/productDatabase";
+import { identifyProduct } from "../ai/identifyProduct";
+
+import {
+  cleanText,
+  includesAny,
+  ensureSentence,
+} from "../utils/textHelpers";
+
+import "../pricing/pricingEngine";
 
 type SaleOutcome = "sellFast" | "balanced" | "mostProfit";
 type MobileView = "input" | "result";
@@ -54,7 +70,7 @@ type PhotoPreview = {
   name: string;
 };
 
-const maxPhotoCount = 6;
+const maxPhotoCount = 20;
 
 const emptyForm: FormData = {
   itemName: "",
@@ -116,49 +132,6 @@ const listingCategories = [
   "General",
 ];
 
-function cleanText(text: string) {
-  return text.trim().replace(/\s+/g, " ");
-}
-
-function ensureSentence(text: string) {
-  const cleaned = cleanText(text);
-
-  if (!cleaned) return "";
-
-  if (
-    cleaned.endsWith(".") ||
-    cleaned.endsWith("!") ||
-    cleaned.endsWith("?")
-  ) {
-    return cleaned;
-  }
-
-  return `${cleaned}.`;
-}
-
-function parseAskingPrice(value: string) {
-  const cleaned = value.replace(/[^0-9.]/g, "");
-  const number = Number(cleaned);
-
-  if (!cleaned || !Number.isFinite(number) || number <= 0) {
-    return null;
-  }
-
-  return number;
-}
-
-function formatExactMoney(value: number) {
-  if (Number.isInteger(value)) return `$${value}`;
-  return `$${value.toFixed(2)}`;
-}
-
-function roundToFive(value: number) {
-  return Math.max(5, Math.round(value / 5) * 5);
-}
-
-function money(value: number) {
-  return `$${roundToFive(value)}`;
-}
 
 function hasTone(form: FormData, tone: ToneTag) {
   return form.toneTags.includes(tone);
@@ -227,10 +200,6 @@ function addBrandToItemName(itemName: string, brand: string) {
   }
 
   return `${cleanBrand} ${cleanItem}`;
-}
-
-function includesAny(text: string, keywords: string[]) {
-  return keywords.some((keyword) => text.includes(keyword));
 }
 
 function detectCategory(itemName: string, details: string) {
@@ -739,7 +708,124 @@ function buildTitle(
   return `${item} – ${benefit}`;
 }
 
-function buildPrice(form: FormData, category: string, variant: VariantId) {
+function guessBasePrice(itemName: string, category: string) {
+  const text = itemName.toLowerCase();
+
+  const lookup: Record<string, Array<{ keywords: string[]; price: number }>> = {
+    Electronics: [
+      { keywords: ["iphone"], price: 450 },
+      { keywords: ["ipad"], price: 300 },
+      { keywords: ["macbook"], price: 700 },
+      { keywords: ["laptop"], price: 350 },
+      { keywords: ["computer"], price: 300 },
+      { keywords: ["monitor"], price: 120 },
+      { keywords: ["tv", "television"], price: 200 },
+      { keywords: ["ps5", "playstation"], price: 400 },
+      { keywords: ["xbox"], price: 300 },
+      { keywords: ["switch", "nintendo"], price: 220 },
+      { keywords: ["speaker", "speakers"], price: 100 },
+      { keywords: ["receiver"], price: 150 },
+      { keywords: ["camera"], price: 250 },
+      { keywords: ["projector"], price: 200 },
+      { keywords: ["phone"], price: 250 },
+    ],
+
+    Tools: [
+      { keywords: ["air compressor", "compressor"], price: 150 },
+      { keywords: ["drill"], price: 80 },
+      { keywords: ["impact driver"], price: 100 },
+      { keywords: ["circular saw"], price: 90 },
+      { keywords: ["miter saw"], price: 180 },
+      { keywords: ["table saw"], price: 300 },
+      { keywords: ["grinder"], price: 70 },
+      { keywords: ["sander"], price: 60 },
+      { keywords: ["tool box"], price: 100 },
+    ],
+
+    Furniture: [
+      { keywords: ["couch", "sofa"], price: 250 },
+      { keywords: ["dresser"], price: 150 },
+      { keywords: ["desk"], price: 120 },
+      { keywords: ["table"], price: 140 },
+      { keywords: ["chair"], price: 60 },
+      { keywords: ["bed"], price: 250 },
+    ],
+
+    "Baby / Kids": [
+      { keywords: ["baby swing", "swing"], price: 90 },
+      { keywords: ["stroller"], price: 150 },
+      { keywords: ["car seat"], price: 120 },
+      { keywords: ["crib"], price: 180 },
+      { keywords: ["high chair"], price: 80 },
+    ],
+
+    Clothing: [
+      { keywords: ["jacket"], price: 40 },
+      { keywords: ["shoes"], price: 50 },
+      { keywords: ["boots"], price: 60 },
+    ],
+
+    Toys: [
+      { keywords: ["lego"], price: 60 },
+      { keywords: ["playset"], price: 75 },
+    ],
+
+    "Sports / Outdoors": [
+      { keywords: ["bike", "bicycle"], price: 250 },
+      { keywords: ["ebike", "e-bike", "electric bike"], price: 900 },
+      { keywords: ["treadmill"], price: 300 },
+      { keywords: ["kayak"], price: 350 },
+    ],
+
+    "Home / Kitchen": [
+      { keywords: ["air fryer"], price: 70 },
+      { keywords: ["microwave"], price: 90 },
+      { keywords: ["coffee maker"], price: 60 },
+      { keywords: ["vacuum"], price: 120 },
+    ],
+  };
+
+  const categoryItems = lookup[category];
+
+  if (categoryItems) {
+    for (const item of categoryItems) {
+      if (item.keywords.some(keyword => text.includes(keyword))) {
+        return item.price;
+      }
+    }
+  }
+
+  switch (category) {
+    case "Electronics":
+      return 150;
+
+    case "Tools":
+      return 100;
+
+    case "Furniture":
+      return 150;
+
+    case "Baby / Kids":
+      return 80;
+
+    case "Sports / Outdoors":
+      return 120;
+
+    case "Home / Kitchen":
+      return 80;
+
+    case "Clothing":
+      return 30;
+
+    case "Toys":
+      return 40;
+
+    default:
+      return 50;
+  }
+}
+
+async function buildPrice(form: FormData, category: string, variant: VariantId) {
   const sellerPrice = parseAskingPrice(form.askingPrice);
 
   if (sellerPrice !== null) {
@@ -749,7 +835,7 @@ function buildPrice(form: FormData, category: string, variant: VariantId) {
     return formatExactMoney(sellerPrice);
   }
 
-  const productInfo = findProduct(form.itemName);
+  const productInfo = await identifyProduct(form.itemName);
 
 if (productInfo) {
   const matches = productInfo.retailRange.match(/\$(\d+)-\$(\d+)/);
@@ -1061,11 +1147,11 @@ Category: ${category}
 ${description}`;
 }
 
-function buildListingVariants(form: FormData): ListingVariant[] {
+async function buildListingVariants(form: FormData): Promise<ListingVariant[]> {
   const category =
     form.categoryOverride || detectCategory(form.itemName, form.details);
 
-    const productInfo = findProduct(form.itemName);
+    const productInfo = await identifyProduct(form.itemName);
 
   const variantPlan: Array<{
     id: VariantId;
@@ -1109,46 +1195,43 @@ function buildListingVariants(form: FormData): ListingVariant[] {
     },
   ];
 
-  return variantPlan.map((variant) => {
-    const title = buildTitle(form, category, variant.titleVariant);
-    const price = buildPrice(form, category, variant.id);
-    const priceSource = buildPriceSource(form, variant.id);
-    let description = buildDescription(
-  form,
-  category,
-  variant.id,
-  price
-);
+  return Promise.all(
+    variantPlan.map(async (variant) => {
+      const title = buildTitle(form, category, variant.titleVariant);
+      const price = await buildPrice(form, category, variant.id);
+      const priceSource = buildPriceSource(form, variant.id);
+      let description = buildDescription(form, category, variant.id, price);
 
-if (productInfo) {
-  description += `
+      if (productInfo) {
+        description += `
 
 Specifications:
-${productInfo.specs.map(spec => `• ${spec}`).join("\n")}
+${productInfo.specs.map((spec: any) => `• ${spec}`).join("\n")}
 
 Typical Retail Range:
 ${productInfo.retailRange}`;
-}
+      }
 
-    return {
-      id: variant.id,
-      label: variant.label,
-      note: variant.note,
-      title,
-      price,
-      priceSource,
-      category,
-      description,
-      strategy: variant.strategy,
-      copyText: buildCopyText(
+      return {
+        id: variant.id,
+        label: variant.label,
+        note: variant.note,
         title,
         price,
-        form.condition || "Not specified",
+        priceSource,
         category,
         description,
-      ),
-    };
-  });
+        strategy: variant.strategy,
+        copyText: buildCopyText(
+          title,
+          await price,
+          form.condition || "Not specified",
+          category,
+          description,
+        ),
+      };
+    }),
+  );
 }
 
 export default function Home() {
@@ -1286,7 +1369,7 @@ export default function Home() {
     });
   }
 
-  function handleGenerate() {
+  async function handleGenerate() {
     setCopied(false);
     setResultNotice("");
 
@@ -1314,17 +1397,18 @@ export default function Home() {
     setIsGenerating(true);
     setFormNotice("");
 
-    setTimeout(() => {
-      const variants = buildListingVariants(form);
+    try {
+      const variants = await buildListingVariants(form);
 
       setListing({
         selectedVariantIndex: defaultVariantIndex(form.saleOutcome),
         variants,
       });
 
-      setIsGenerating(false);
       switchMobileView("result");
-    }, 650);
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   function handleSelectVariant(index: number) {

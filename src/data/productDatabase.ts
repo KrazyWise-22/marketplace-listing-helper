@@ -67,6 +67,119 @@ export const productDatabase: ProductProfile[] = [
       "5G Compatible"
     ]
   }
+,
+{
+  keywords: [
+    "ebike",
+    "e-bike",
+    "electric bike",
+    "electric bicycle"
+  ],
+  category: "Sports / Outdoors",
+  retailRange: "$600-$2500",
+  specs: [
+    "Electric Motor",
+    "Rechargeable Battery",
+    "Pedal Assist",
+    "Battery Charger"
+  ]
+},
+
+{
+  keywords: [
+    "nintendo switch",
+    "switch oled",
+    "switch lite"
+  ],
+  category: "Electronics",
+  retailRange: "$150-$350",
+  specs: [
+    "Nintendo Game Console",
+    "Portable Gaming",
+    "Wireless Controllers",
+    "HDMI Output"
+  ]
+},
+
+{
+  keywords: [
+    "xbox series x",
+    "xbox series s"
+  ],
+  category: "Electronics",
+  retailRange: "$250-$500",
+  specs: [
+    "Microsoft Game Console",
+    "4K Gaming",
+    "Solid State Drive",
+    "Wireless Controller"
+  ]
+},
+
+{
+  keywords: [
+    "dyson vacuum",
+    "dyson cordless",
+    "dyson v11",
+    "dyson v15"
+  ],
+  category: "Home",
+  retailRange: "$250-$800",
+  specs: [
+    "Cordless Vacuum",
+    "Cyclonic Filtration",
+    "Rechargeable Battery",
+    "Bagless Dust Bin"
+  ]
+},
+
+{
+  keywords: [
+    "kitchenaid mixer",
+    "artisan mixer",
+    "stand mixer"
+  ],
+  category: "Home",
+  retailRange: "$200-$500",
+  specs: [
+    "Stand Mixer",
+    "Multiple Speed Settings",
+    "Mixing Bowl",
+    "Accessory Hub"
+  ]
+},
+
+{
+  keywords: [
+    "milwaukee impact",
+    "milwaukee drill",
+    "milwaukee driver"
+  ],
+  category: "Tools",
+  retailRange: "$100-$350",
+  specs: [
+    "Cordless Power Tool",
+    "Lithium-Ion Battery",
+    "Variable Speed",
+    "LED Work Light"
+  ]
+},
+
+{
+  keywords: [
+    "dewalt drill",
+    "dewalt impact",
+    "dewalt driver"
+  ],
+  category: "Tools",
+  retailRange: "$100-$350",
+  specs: [
+    "Cordless Power Tool",
+    "Lithium-Ion Battery",
+    "Variable Speed",
+    "LED Work Light"
+  ]
+}
 ];
 
 export function findProduct(itemName: string) {
