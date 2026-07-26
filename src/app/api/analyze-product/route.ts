@@ -21,53 +21,57 @@ export async function POST(req: Request) {
       apiKey,
     });
 
-    const body = await req.json();
-
-    const itemName = body.itemName;
+    const form = await req.json();
 
     const response = await openai.responses.create({
       model: "gpt-5",
       input: `
-You are a product identification engine.
+You are an expert product identification engine.
 
-Analyze the following marketplace item.
+Your ONLY job is to identify the product.
 
-Item:
-${itemName}
+Seller Information:
+
+${JSON.stringify(form, null, 2)}
 
 Return ONLY valid JSON.
 
 {
   "productName": "",
-  "brand": "",
-  "model": "",
+  "brand": null,
+  "model": null,
   "category": "",
   "subcategory": "",
-  "conditionAssumption": "Unknown",
+  "conditionAssumption": "",
   "estimatedRetailLow": 0,
   "estimatedRetailHigh": 0,
   "confidence": 0,
   "specifications": [],
   "summary": ""
 }
-
-Rules:
-
-- Never explain.
-- Never use markdown.
-- Never wrap the JSON in code fences.
-- If the brand is unknown, use null.
-- If the model is unknown, use null.
-- Confidence must be between 0 and 1.
-- Retail values must be numbers.
-- Specifications should be short bullet-style strings.
-- Summary should be one concise paragraph describing what the product is and what it does.
-`
+`,
     });
+
+    let analysis;
+
+    try {
+      analysis = JSON.parse(response.output_text);
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "AI returned invalid JSON.",
+          raw: response.output_text,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      result: response.output_text,
+      result: analysis,
     });
   } catch (error) {
     console.error(error);

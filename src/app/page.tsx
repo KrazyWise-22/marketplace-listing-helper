@@ -21,6 +21,15 @@ import {
 
 import "../pricing/pricingEngine";
 
+import {
+  detectBrand,
+  addBrandToItemName,
+} from "../detection/detectBrand";
+
+import { detectCategory } from "../detection/detectCategory";
+
+import { buildTitle } from "../listings/buildTitle";
+
 type SaleOutcome = "sellFast" | "balanced" | "mostProfit";
 type MobileView = "input" | "result";
 
@@ -151,216 +160,6 @@ function seriousOffersLine(hasSellerPrice: boolean) {
     : "Serious offers only, please.";
 }
 
-function detectBrand(itemName: string) {
-  const text = itemName.toLowerCase();
-
-  if (
-    text.includes("iphone") ||
-    text.includes("ipad") ||
-    text.includes("macbook") ||
-    text.includes("apple watch")
-  ) {
-    return "Apple";
-  }
-
-  if (text.includes("galaxy") || text.includes("samsung")) return "Samsung";
-  if (text.includes("ps5") || text.includes("playstation")) return "Sony";
-  if (text.includes("xbox")) return "Microsoft";
-  if (text.includes("switch")) return "Nintendo";
-  if (text.includes("nike")) return "Nike";
-  if (text.includes("dewalt")) return "DeWalt";
-  if (text.includes("milwaukee")) return "Milwaukee";
-  if (text.includes("ryobi")) return "Ryobi";
-  if (text.includes("skil")) return "SKIL";
-  if (text.includes("craftsman")) return "Craftsman";
-  if (text.includes("pioneer")) return "Pioneer";
-  if (text.includes("sony")) return "Sony";
-  if (text.includes("bose")) return "Bose";
-  if (text.includes("jbl")) return "JBL";
-  if (text.includes("babybond")) return "BabyBond";
-  if (text.includes("graco")) return "Graco";
-  if (text.includes("fisher price") || text.includes("fisher-price")) {
-    return "Fisher-Price";
-  }
-  if (text.includes("hp laptop") || text.includes("hp ")) return "HP";
-  if (text.includes("dell")) return "Dell";
-  if (text.includes("lenovo")) return "Lenovo";
-
-  return "";
-}
-
-function addBrandToItemName(itemName: string, brand: string) {
-  const cleanItem = cleanText(itemName);
-  const cleanBrand = cleanText(brand);
-
-  if (!cleanItem || !cleanBrand) return cleanItem;
-
-  if (cleanItem.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
-    return cleanItem;
-  }
-
-  return `${cleanBrand} ${cleanItem}`;
-}
-
-function detectCategory(itemName: string, details: string) {
-  const text = `${itemName} ${details}`.toLowerCase();
-
-  if (
-    includesAny(text, [
-      "baby",
-      "toddler",
-      "kids",
-      "kid ",
-      "crib",
-      "stroller",
-      "car seat",
-      "high chair",
-      "walker",
-      "bouncer",
-      "bassinet",
-      "playpen",
-      "pack n play",
-      "pack-n-play",
-      "diaper",
-      "nursery",
-    ])
-  ) {
-    return "Baby / Kids";
-  }
-
-  if (
-    includesAny(text, [
-      "drill",
-      "saw",
-      "tool",
-      "wrench",
-      "socket",
-      "hammer",
-      "grinder",
-      "sander",
-      "dewalt",
-      "milwaukee",
-      "ryobi",
-      "craftsman",
-      "skil",
-    ])
-  ) {
-    return "Tools";
-  }
-
-  if (
-    includesAny(text, [
-      "iphone",
-      "phone",
-      "tv",
-      "television",
-      "laptop",
-      "computer",
-      "tablet",
-      "ipad",
-      "monitor",
-      "xbox",
-      "playstation",
-      "ps5",
-      "nintendo",
-      "switch",
-      "macbook",
-      "galaxy",
-      "camera",
-      "projector",
-      "speaker",
-      "speakers",
-      "receiver",
-      "charger",
-      "power bank",
-      "headphones",
-      "earbuds",
-    ])
-  ) {
-    return "Electronics";
-  }
-
-  if (
-    includesAny(text, [
-      "couch",
-      "sofa",
-      "chair",
-      "table",
-      "desk",
-      "dresser",
-      "bed",
-      "nightstand",
-      "cabinet",
-      "shelf",
-      "bookcase",
-      "mattress",
-    ])
-  ) {
-    return "Furniture";
-  }
-
-  if (
-    includesAny(text, [
-      "shirt",
-      "pants",
-      "jacket",
-      "shoes",
-      "boots",
-      "hoodie",
-      "nike",
-      "dress",
-      "coat",
-      "jeans",
-    ])
-  ) {
-    return "Clothing";
-  }
-
-  if (
-    includesAny(text, [
-      "air fryer",
-      "microwave",
-      "coffee maker",
-      "blender",
-      "mixer",
-      "vacuum",
-      "lamp",
-      "rug",
-      "curtains",
-      "dishes",
-      "cookware",
-    ])
-  ) {
-    return "Home / Kitchen";
-  }
-
-  if (
-    includesAny(text, [
-      "bike",
-      "bicycle",
-      "treadmill",
-      "weights",
-      "dumbbell",
-      "tent",
-      "cooler",
-      "fishing",
-      "golf",
-      "kayak",
-      "sports",
-    ])
-  ) {
-    return "Sports / Outdoors";
-  }
-
-  if (
-    includesAny(text, ["toy", "game", "puzzle", "lego", "doll", "playset"])
-  ) {
-    return "Toys";
-  }
-
-  return "General";
-}
-
 function baseItemTitle(form: FormData) {
   const itemName = cleanText(form.itemName);
   const brand = detectBrand(itemName);
@@ -397,16 +196,6 @@ function itemWords(item: string) {
     needVerb: plural ? "need" : "needs",
     availablePhrase: plural ? "they’re available" : "it’s available",
   };
-}
-
-function conditionPhrase(condition: string) {
-  if (condition === "New") return "Brand New";
-  if (condition === "Like New") return "Like New";
-  if (condition === "Good") return "Good Condition";
-  if (condition === "Fair") return "Fair Condition";
-  if (condition === "Needs Repair") return "Needs Repair";
-
-  return "";
 }
 
 function conditionDescription(condition: string) {
@@ -538,58 +327,6 @@ function conditionWithDetailsOrDefault(
   )}`;
 }
 
-function categoryBenefit(category: string, condition: string) {
-  if (condition === "Needs Repair") return "Repair Project";
-  if (category === "Electronics") return "Ready to Use";
-  if (category === "Baby / Kids") return "Ready for Use";
-  if (category === "Furniture") return "Practical Piece";
-  if (category === "Tools") return "Ready to Use";
-  if (category === "Clothing") return "Ready to Wear";
-  if (category === "Toys") return "Ready to Enjoy";
-
-  return "Ready for Pickup";
-}
-
-function valueTitlePhrase(item: string, category: string) {
-  const text = item.toLowerCase();
-
-  if (category === "Electronics" && text.includes("speaker")) {
-    return "Audio Gear";
-  }
-
-  if (category === "Baby / Kids") return "Useful Baby Item";
-  if (category === "Electronics") return "Ready to Use";
-  if (category === "Furniture") return "Solid Piece";
-  if (category === "Tools") return "Ready to Use";
-  if (category === "Clothing") return "Clean and Ready";
-  if (category === "Toys") return "Ready to Enjoy";
-
-  return "Worth Considering";
-}
-
-function conditionMultiplier(condition: string) {
-  switch (condition) {
-    case "New":
-      return 0.95;
-    case "Like New":
-      return 0.82;
-    case "Good":
-      return 0.68;
-    case "Fair":
-      return 0.48;
-    case "Needs Repair":
-      return 0.28;
-    default:
-      return 0.58;
-  }
-}
-
-function outcomeMultiplier(outcome: SaleOutcome) {
-  if (outcome === "sellFast") return 0.85;
-  if (outcome === "mostProfit") return 1.18;
-  return 1;
-}
-
 function outcomeLabel(outcome: SaleOutcome) {
   if (outcome === "sellFast") return "Sell Fast";
   if (outcome === "mostProfit") return "Most Profit";
@@ -665,166 +402,6 @@ function valuePitch(item: string, category: string) {
   return `${words.subject} ${words.beVerb} a solid option for someone looking for this type of item.`;
 }
 
-function buildTitle(
-  form: FormData,
-  category: string,
-  variant: "recommended" | "fast" | "value" | "honest",
-) {
-  const item = baseItemTitle(form);
-  const condition = conditionPhrase(form.condition);
-  const benefit = categoryBenefit(category, form.condition);
-  const valuePhrase = valueTitlePhrase(item, category);
-
-  if (form.condition === "Needs Repair") {
-    if (variant === "fast") return `${item} – Needs Repair, Priced to Move`;
-    if (variant === "value") return `${item} – Repair Project`;
-    return `${item} – Needs Repair`;
-  }
-
-  if (variant === "fast") {
-    return `${item} – Priced to Sell`;
-  }
-
-  if (variant === "value") {
-    if (condition) return `${item} – ${condition}, ${valuePhrase}`;
-    return `${item} – ${valuePhrase}`;
-  }
-
-  if (variant === "honest") {
-    if (condition) return `${item} – ${condition}`;
-    return `${item} – ${benefit}`;
-  }
-
-  if (form.saleOutcome === "sellFast") {
-    return `${item} – ${benefit}`;
-  }
-
-  if (form.saleOutcome === "mostProfit") {
-    if (condition) return `${item} – ${condition}, ${valuePhrase}`;
-    return `${item} – ${valuePhrase}`;
-  }
-
-  if (condition) return `${item} – ${condition}`;
-  return `${item} – ${benefit}`;
-}
-
-function guessBasePrice(itemName: string, category: string) {
-  const text = itemName.toLowerCase();
-
-  const lookup: Record<string, Array<{ keywords: string[]; price: number }>> = {
-    Electronics: [
-      { keywords: ["iphone"], price: 450 },
-      { keywords: ["ipad"], price: 300 },
-      { keywords: ["macbook"], price: 700 },
-      { keywords: ["laptop"], price: 350 },
-      { keywords: ["computer"], price: 300 },
-      { keywords: ["monitor"], price: 120 },
-      { keywords: ["tv", "television"], price: 200 },
-      { keywords: ["ps5", "playstation"], price: 400 },
-      { keywords: ["xbox"], price: 300 },
-      { keywords: ["switch", "nintendo"], price: 220 },
-      { keywords: ["speaker", "speakers"], price: 100 },
-      { keywords: ["receiver"], price: 150 },
-      { keywords: ["camera"], price: 250 },
-      { keywords: ["projector"], price: 200 },
-      { keywords: ["phone"], price: 250 },
-    ],
-
-    Tools: [
-      { keywords: ["air compressor", "compressor"], price: 150 },
-      { keywords: ["drill"], price: 80 },
-      { keywords: ["impact driver"], price: 100 },
-      { keywords: ["circular saw"], price: 90 },
-      { keywords: ["miter saw"], price: 180 },
-      { keywords: ["table saw"], price: 300 },
-      { keywords: ["grinder"], price: 70 },
-      { keywords: ["sander"], price: 60 },
-      { keywords: ["tool box"], price: 100 },
-    ],
-
-    Furniture: [
-      { keywords: ["couch", "sofa"], price: 250 },
-      { keywords: ["dresser"], price: 150 },
-      { keywords: ["desk"], price: 120 },
-      { keywords: ["table"], price: 140 },
-      { keywords: ["chair"], price: 60 },
-      { keywords: ["bed"], price: 250 },
-    ],
-
-    "Baby / Kids": [
-      { keywords: ["baby swing", "swing"], price: 90 },
-      { keywords: ["stroller"], price: 150 },
-      { keywords: ["car seat"], price: 120 },
-      { keywords: ["crib"], price: 180 },
-      { keywords: ["high chair"], price: 80 },
-    ],
-
-    Clothing: [
-      { keywords: ["jacket"], price: 40 },
-      { keywords: ["shoes"], price: 50 },
-      { keywords: ["boots"], price: 60 },
-    ],
-
-    Toys: [
-      { keywords: ["lego"], price: 60 },
-      { keywords: ["playset"], price: 75 },
-    ],
-
-    "Sports / Outdoors": [
-      { keywords: ["bike", "bicycle"], price: 250 },
-      { keywords: ["ebike", "e-bike", "electric bike"], price: 900 },
-      { keywords: ["treadmill"], price: 300 },
-      { keywords: ["kayak"], price: 350 },
-    ],
-
-    "Home / Kitchen": [
-      { keywords: ["air fryer"], price: 70 },
-      { keywords: ["microwave"], price: 90 },
-      { keywords: ["coffee maker"], price: 60 },
-      { keywords: ["vacuum"], price: 120 },
-    ],
-  };
-
-  const categoryItems = lookup[category];
-
-  if (categoryItems) {
-    for (const item of categoryItems) {
-      if (item.keywords.some(keyword => text.includes(keyword))) {
-        return item.price;
-      }
-    }
-  }
-
-  switch (category) {
-    case "Electronics":
-      return 150;
-
-    case "Tools":
-      return 100;
-
-    case "Furniture":
-      return 150;
-
-    case "Baby / Kids":
-      return 80;
-
-    case "Sports / Outdoors":
-      return 120;
-
-    case "Home / Kitchen":
-      return 80;
-
-    case "Clothing":
-      return 30;
-
-    case "Toys":
-      return 40;
-
-    default:
-      return 50;
-  }
-}
-
 async function buildPrice(form: FormData, category: string, variant: VariantId) {
   const sellerPrice = parseAskingPrice(form.askingPrice);
 
@@ -835,9 +412,9 @@ async function buildPrice(form: FormData, category: string, variant: VariantId) 
     return formatExactMoney(sellerPrice);
   }
 
-  const productInfo = await identifyProduct(form.itemName);
+  const productInfo = await identifyProduct(form);
 
-if (productInfo) {
+if (productInfo && "retailRange" in productInfo && productInfo.retailRange) {
   const matches = productInfo.retailRange.match(/\$(\d+)-\$(\d+)/);
 
   if (matches) {
@@ -1151,7 +728,7 @@ async function buildListingVariants(form: FormData): Promise<ListingVariant[]> {
   const category =
     form.categoryOverride || detectCategory(form.itemName, form.details);
 
-    const productInfo = await identifyProduct(form.itemName);
+    const productInfo = await identifyProduct(form);
 
   const variantPlan: Array<{
     id: VariantId;
@@ -1202,7 +779,7 @@ async function buildListingVariants(form: FormData): Promise<ListingVariant[]> {
       const priceSource = buildPriceSource(form, variant.id);
       let description = buildDescription(form, category, variant.id, price);
 
-      if (productInfo) {
+      if (productInfo && "specs" in productInfo && "retailRange" in productInfo) {
         description += `
 
 Specifications:

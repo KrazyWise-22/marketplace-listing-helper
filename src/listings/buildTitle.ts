@@ -1,21 +1,111 @@
-import type { FormData } from "../types/listing";
+import type { FormData, VariantId } from "../types/listing";
+import { baseItemTitle } from "../detection/baseItemTitle";
+
+function conditionPhrase(condition: string): string {
+  if (condition === "New") return "Brand New";
+  if (condition === "Like New") return "Like New";
+  if (condition === "Good") return "Good Condition";
+  if (condition === "Fair") return "Fair Condition";
+  if (condition === "Needs Repair") return "Needs Repair";
+
+  return "";
+}
+
+function categoryBenefit(
+  category: string,
+  condition: string
+): string {
+  if (condition === "Needs Repair") return "Repair Project";
+  if (category === "Electronics") return "Ready to Use";
+  if (category === "Baby / Kids") return "Ready for Use";
+  if (category === "Furniture") return "Practical Piece";
+  if (category === "Tools") return "Ready to Use";
+  if (category === "Clothing") return "Ready to Wear";
+  if (category === "Toys") return "Ready to Enjoy";
+
+  return "Ready for Pickup";
+}
+
+function valueTitlePhrase(
+  item: string,
+  category: string
+): string {
+  const text = item.toLowerCase();
+
+  if (
+    category === "Electronics" &&
+    text.includes("speaker")
+  ) {
+    return "Audio Gear";
+  }
+
+  if (category === "Baby / Kids") return "Useful Baby Item";
+  if (category === "Electronics") return "Ready to Use";
+  if (category === "Furniture") return "Solid Piece";
+  if (category === "Tools") return "Ready to Use";
+  if (category === "Clothing") return "Clean and Ready";
+  if (category === "Toys") return "Ready to Enjoy";
+
+  return "Worth Considering";
+}
 
 export function buildTitle(
   form: FormData,
-  category: string
-) {
-  const item = form.itemName.trim();
+  category: string,
+  variant: VariantId
+): string {
+  const item = baseItemTitle(form);
+  const condition = conditionPhrase(form.condition);
+  const benefit = categoryBenefit(category, form.condition);
+  const valuePhrase = valueTitlePhrase(item, category);
 
-  if (!item) {
-    return "";
+  if (form.condition === "Needs Repair") {
+    if (variant === "fast") {
+      return `${item} – Needs Repair, Priced to Move`;
+    }
+
+    if (variant === "value") {
+      return `${item} – Repair Project`;
+    }
+
+    return `${item} – Needs Repair`;
   }
 
-  if (
-    category &&
-    !item.toLowerCase().includes(category.toLowerCase())
-  ) {
-    return `${item} - ${category}`;
+  if (variant === "fast") {
+    return `${item} – Priced to Sell`;
   }
 
-  return item;
+  if (variant === "value") {
+    if (condition) {
+      return `${item} – ${condition}, ${valuePhrase}`;
+    }
+
+    return `${item} – ${valuePhrase}`;
+  }
+
+  if (variant === "honest") {
+    if (condition) {
+      return `${item} – ${condition}`;
+    }
+
+    return `${item} – ${benefit}`;
+  }
+
+  if (form.saleOutcome === "sellFast") {
+    return `${item} – ${benefit}`;
+  }
+
+  if (form.saleOutcome === "mostProfit") {
+    if (condition) {
+      return `${item} – ${condition}, ${valuePhrase}`;
+    }
+
+    return `${item} – ${valuePhrase}`;
+  }
+
+  if (condition) {
+    return `${item} – ${condition}`;
+  }
+
+  return `${item} – ${benefit}`;
 }

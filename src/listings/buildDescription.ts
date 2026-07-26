@@ -10,5 +10,10 @@ export function buildDescription(
     return details;
   }
 
-  return `Listed in the ${category} category.`;
+  return [
+    `${form.itemName} is in ${form.condition.toLowerCase()} condition.`,
+    "Ready for its next owner.",
+    `Listed in the ${category} category.`,
+    "Message me if you have any questions.",
+  ].join(" ");
 }

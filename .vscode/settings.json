@@ -1,0 +1,6 @@
+{
+    "github.copilot.chat.languageContext.typescript.enabled": false,
+    "github.copilot.nextEditSuggestions.fixes": false,
+    "github.copilot.nextEditSuggestions.enabled": false,
+    "github.copilot.nextEditSuggestions.allowWhitespaceOnlyChanges": false
+}
