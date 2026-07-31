@@ -1,17 +1,20 @@
 # ZipList Refactor
 
 ## Detection
+
 - [ ] detectBrand
 - [ ] detectCategory
 - [ ] baseItemTitle
 
 ## Titles
-- [ ] buildTitle
-- [ ] conditionPhrase
-- [ ] categoryBenefit
-- [ ] valueTitlePhrase
+
+- [x] buildTitle
+- [x] conditionPhrase
+- [x] categoryBenefit
+- [x] valueTitlePhrase
 
 ## Pricing
+
 - [ ] buildPrice
 - [ ] buildPriceSource
 - [ ] pricingEngine
@@ -20,6 +23,7 @@
 - [ ] outcomeMultiplier
 
 ## Descriptions
+
 - [ ] itemWords
 - [ ] conditionDescription
 - [ ] shortCondition
@@ -31,10 +35,12 @@
 - [ ] buildDescription
 
 ## Listings
+
 - [ ] buildCopyText
 - [ ] buildListingVariants
 
 ## Cleanup
+
 - [ ] Remove duplicate functions from page.tsx
 - [ ] Remove App/titles
 - [ ] Remove App/descriptions
