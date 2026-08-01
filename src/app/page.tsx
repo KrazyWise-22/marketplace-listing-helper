@@ -9,7 +9,13 @@ import {
   formatExactMoney,
 } from "../utils/money";
 
+import { guessBasePrice } from "../pricing/guessBasePrice";
+import { conditionMultiplier } from "../pricing/conditionMultiplier";
+import { outcomeMultiplier } from "../pricing/outcomeMultiplier";
+
 import { useState } from "react";
+
+import { buildPrice } from "../pricing/buildPrice";
 
 import { identifyProduct } from "../ai/identifyProduct";
 
@@ -29,6 +35,7 @@ import {
 import { detectCategory } from "../detection/detectCategory";
 
 import { buildTitle } from "../listings/buildTitle";
+import { buildPriceSource } from "@/pricing/buildPriceSource";
 
 type SaleOutcome = "sellFast" | "balanced" | "mostProfit";
 type MobileView = "input" | "result";
@@ -140,7 +147,6 @@ const listingCategories = [
   "Sports / Outdoors",
   "General",
 ];
-
 
 function hasTone(form: FormData, tone: ToneTag) {
   return form.toneTags.includes(tone);
@@ -400,65 +406,6 @@ function valuePitch(item: string, category: string) {
   }
 
   return `${words.subject} ${words.beVerb} a solid option for someone looking for this type of item.`;
-}
-
-async function buildPrice(form: FormData, category: string, variant: VariantId) {
-  const sellerPrice = parseAskingPrice(form.askingPrice);
-
-  if (sellerPrice !== null) {
-    if (variant === "fast") return money(sellerPrice * 0.9);
-    if (variant === "value") return money(sellerPrice * 1.08);
-
-    return formatExactMoney(sellerPrice);
-  }
-
-  const productInfo = await identifyProduct(form);
-
-if (productInfo && "retailRange" in productInfo && productInfo.retailRange) {
-  const matches = productInfo.retailRange.match(/\$(\d+)-\$(\d+)/);
-
-  if (matches) {
-    const low = Number(matches[1]);
-    const high = Number(matches[2]);
-
-    if (variant === "fast") {
-      return money(low * 0.9);
-    }
-
-    if (variant === "value") {
-      return money(high);
-    }
-
-    return money(low);
-  }
-}
-
-const base = guessBasePrice(form.itemName, category);
-
-const conditionAdjusted =
-  base * conditionMultiplier(form.condition);
-
-const outcomeAdjusted =
-  conditionAdjusted * outcomeMultiplier(form.saleOutcome);
-
-if (variant === "fast") return money(outcomeAdjusted * 0.9);
-if (variant === "value") return money(outcomeAdjusted * 1.12);
-if (variant === "honest") return money(outcomeAdjusted);
-
-return money(outcomeAdjusted);
-}
-
-function buildPriceSource(form: FormData, variant: VariantId) {
-  const sellerPrice = parseAskingPrice(form.askingPrice);
-
-  if (sellerPrice !== null) {
-    if (variant === "fast") return "Seller price adjusted for faster sale";
-    if (variant === "value") return "Seller price adjusted for higher value";
-
-    return "Seller-entered price";
-  }
-
-  return "ZipList estimate";
 }
 
 function buildDescription(

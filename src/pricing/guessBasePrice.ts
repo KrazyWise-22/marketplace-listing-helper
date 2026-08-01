@@ -1,4 +1,4 @@
-function guessBasePrice(itemName: string, category: string) {
+export function guessBasePrice(itemName: string, category: string) {
   const text = itemName.toLowerCase();
 
   const lookup: Record<string, Array<{ keywords: string[]; price: number }>> = {

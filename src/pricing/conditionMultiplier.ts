@@ -1,4 +1,4 @@
-function conditionMultiplier(condition: string) {
+export function conditionMultiplier(condition: string) {
   switch (condition) {
     case "New":
       return 0.95;
