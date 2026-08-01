@@ -27,6 +27,8 @@ import {
 
 import "../pricing/pricingEngine";
 
+import { buildCopyText } from "../listings/buildCopyText";
+
 import {
   detectBrand,
   addBrandToItemName,
@@ -653,22 +655,6 @@ ${closing}`;
   return `${conditionLine} ${
     hasDetails ? detailSentence : fallbackDetails
   } ${closing}`;
-}
-
-function buildCopyText(
-  title: string,
-  price: string,
-  condition: string,
-  category: string,
-  description: string,
-) {
-  return `${title}
-
-Price: ${price}
-Condition: ${condition || "Not specified"}
-Category: ${category}
-
-${description}`;
 }
 
 async function buildListingVariants(form: FormData): Promise<ListingVariant[]> {
