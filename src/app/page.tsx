@@ -29,6 +29,8 @@ import "../pricing/pricingEngine";
 
 import { buildCopyText } from "../listings/buildCopyText";
 
+import { buildListingVariants } from "../listings/buildListingVariants";
+
 import {
   detectBrand,
   addBrandToItemName,
@@ -657,93 +659,6 @@ ${closing}`;
   } ${closing}`;
 }
 
-async function buildListingVariants(form: FormData): Promise<ListingVariant[]> {
-  const category =
-    form.categoryOverride || detectCategory(form.itemName, form.details);
-
-    const productInfo = await identifyProduct(form);
-
-  const variantPlan: Array<{
-    id: VariantId;
-    label: string;
-    note: string;
-    titleVariant: "recommended" | "fast" | "value" | "honest";
-    strategy: string;
-  }> = [
-    {
-      id: "recommended",
-      label: "Recommended",
-      note: "Balanced listing based on the seller goal.",
-      titleVariant: "recommended",
-      strategy: `Auto-chosen for ${outcomeLabel(
-        form.saleOutcome,
-      )} with ${toneText(form.toneTags)} tone.`,
-    },
-    {
-      id: "fast",
-      label: "Faster Sale",
-      note: "Good deal, light urgency, easier action.",
-      titleVariant: "fast",
-      strategy:
-        "Built to make the item feel like a good deal and encourage faster action.",
-    },
-    {
-      id: "value",
-      label: "Higher Value",
-      note: "Talks up the product without overhyping.",
-      titleVariant: "value",
-      strategy:
-        "Built to support a stronger asking price by highlighting why the item is worth considering.",
-    },
-    {
-      id: "honest",
-      label: "Clear & Honest",
-      note: "Condition-forward and buyer-friendly.",
-      titleVariant: "honest",
-      strategy:
-        "Built to reduce confusion and wasted messages by being clear about condition and details.",
-    },
-  ];
-
-  return Promise.all(
-    variantPlan.map(async (variant) => {
-      const title = buildTitle(form, category, variant.titleVariant);
-      const price = await buildPrice(form, category, variant.id);
-      const priceSource = buildPriceSource(form, variant.id);
-      let description = buildDescription(form, category, variant.id, price);
-
-      if (productInfo && "specs" in productInfo && "retailRange" in productInfo) {
-        description += `
-
-Specifications:
-${productInfo.specs.map((spec: any) => `• ${spec}`).join("\n")}
-
-Typical Retail Range:
-${productInfo.retailRange}`;
-      }
-
-      return {
-        id: variant.id,
-        label: variant.label,
-        note: variant.note,
-        title,
-        price,
-        priceSource,
-        category,
-        description,
-        strategy: variant.strategy,
-        copyText: buildCopyText(
-          title,
-          await price,
-          form.condition || "Not specified",
-          category,
-          description,
-        ),
-      };
-    }),
-  );
-}
-
 export default function Home() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [listing, setListing] = useState<ListingOutput>(emptyListing);
@@ -908,7 +823,11 @@ export default function Home() {
     setFormNotice("");
 
     try {
-      const variants = await buildListingVariants(form);
+      const variants = await buildListingVariants(form, {
+  buildDescription,
+  outcomeLabel,
+  toneText,
+});
 
       setListing({
         selectedVariantIndex: defaultVariantIndex(form.saleOutcome),
