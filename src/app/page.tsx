@@ -18,7 +18,6 @@ import type {
   ListingOutput,
   MobileView,
   PhotoPreview,
-  SaleOutcome,
   ToneTag,
 } from "../types/listing";
 
@@ -28,11 +27,16 @@ import {
   toneText,
 } from "../utils/listingHelpers";
 
+import {
+  outcomeButtonClass,
+  toneButtonClass,
+  variantButtonClass,
+} from "../utils/buttonClasses";
+
 import { buildDescription } from "./descriptions/buildDescription";
 import { buildListingVariants } from "../listings/buildListingVariants";
 import { cleanText } from "../utils/textHelpers";
 
-type VariantId = "placeholder" | "recommended" | "fast" | "value" | "honest";
 
 export default function Home() {
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -261,24 +265,6 @@ export default function Home() {
     }
   }
 
-  function toneButtonClass(selected: boolean) {
-    return selected
-      ? "border-emerald-400 bg-emerald-400 text-black shadow-[0_0_0_1px_rgba(52,211,153,0.25)]"
-      : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500";
-  }
-
-  function outcomeButtonClass(outcome: SaleOutcome) {
-    return form.saleOutcome === outcome
-      ? "border-emerald-400 bg-slate-800 text-white shadow-[0_0_0_1px_rgba(52,211,153,0.2)]"
-      : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500";
-  }
-
-  function variantButtonClass(index: number) {
-    return listing.selectedVariantIndex === index
-      ? "border-emerald-400 bg-slate-800 shadow-[0_0_0_1px_rgba(52,211,153,0.2)]"
-      : "border-slate-800 bg-slate-950 hover:border-slate-600";
-  }
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
@@ -486,6 +472,7 @@ export default function Home() {
                     type="button"
                     onClick={() => updateField("saleOutcome", "sellFast")}
                     className={`rounded-xl border p-4 text-left transition ${outcomeButtonClass(
+                      form.saleOutcome,
                       "sellFast",
                     )}`}
                   >
@@ -499,6 +486,7 @@ export default function Home() {
                     type="button"
                     onClick={() => updateField("saleOutcome", "balanced")}
                     className={`rounded-xl border p-4 text-left transition ${outcomeButtonClass(
+                      form.saleOutcome,
                       "balanced",
                     )}`}
                   >
@@ -512,6 +500,7 @@ export default function Home() {
                     type="button"
                     onClick={() => updateField("saleOutcome", "mostProfit")}
                     className={`rounded-xl border p-4 text-left transition ${outcomeButtonClass(
+                      form.saleOutcome,
                       "mostProfit",
                     )}`}
                   >
@@ -831,6 +820,7 @@ export default function Home() {
                           onClick={() => handleSelectVariant(index)}
                           disabled={isGenerating || !hasGeneratedListing}
                           className={`rounded-xl border p-4 text-left transition ${variantButtonClass(
+                            listing.selectedVariantIndex,
                             index,
                           )}`}
                         >
