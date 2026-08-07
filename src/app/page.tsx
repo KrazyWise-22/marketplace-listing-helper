@@ -4,6 +4,15 @@
 
 import { useState } from "react";
 
+import {
+  emptyForm,
+  emptyListing,
+  feedbackFormUrl,
+  listingCategories,
+  maxPhotoCount,
+  toneOptions,
+} from "../constants/app";
+
 import type {
   FormData,
   ListingOutput,
@@ -18,68 +27,6 @@ import { buildListingVariants } from "../listings/buildListingVariants";
 import { cleanText } from "../utils/textHelpers";
 
 type VariantId = "placeholder" | "recommended" | "fast" | "value" | "honest";
-
-const maxPhotoCount = 20;
-
-const emptyForm: FormData = {
-  itemName: "",
-  condition: "",
-  categoryOverride: "",
-  saleOutcome: "balanced",
-  askingPrice: "",
-  toneTags: [],
-  details: "",
-};
-
-const emptyListing: ListingOutput = {
-  selectedVariantIndex: 0,
-  variants: [
-    {
-      id: "placeholder",
-      label: "Recommended Listing",
-      note: "ZipList will choose the best version after generating.",
-      title: "Your generated title will appear here",
-      price: "—",
-      priceSource: "Waiting for input",
-      category: "Category auto-detected",
-      description: "Your generated description will appear here.",
-      strategy: "Waiting for item details.",
-      copyText: `Your generated title will appear here
-
-Price: —
-Condition: Not specified
-Category: Category auto-detected
-
-Your generated description will appear here.`,
-    },
-  ],
-};
-
-const toneOptions: ToneTag[] = [
-  "Friendly",
-  "Professional",
-  "Simple",
-  "Detailed",
-  "Confident",
-  "Casual",
-  "Trustworthy",
-  "Short",
-];
-
-const feedbackFormUrl =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdWytfydGV7Z8VcR0BEvTmsmhpEdwlFyWZxbR7iGhq_kGAmtA/viewform?usp=publish-editor";
-
-const listingCategories = [
-  "Electronics",
-  "Baby / Kids",
-  "Furniture",
-  "Tools",
-  "Clothing",
-  "Toys",
-  "Home / Kitchen",
-  "Sports / Outdoors",
-  "General",
-];
 
 function toneText(toneTags: ToneTag[]) {
   return toneTags.length > 0 ? toneTags.join(" + ") : "Neutral default";
