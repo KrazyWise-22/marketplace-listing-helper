@@ -2,46 +2,11 @@
 
 /* eslint-disable @next/next/no-img-element -- Local object URL previews are not optimized by next/image. */
 
-import {
-  parseAskingPrice,
-  roundToFive,
-  money,
-  formatExactMoney,
-} from "../utils/money";
-
-import { guessBasePrice } from "../pricing/guessBasePrice";
-import { conditionMultiplier } from "../pricing/conditionMultiplier";
-import { outcomeMultiplier } from "../pricing/outcomeMultiplier";
-
 import { useState } from "react";
 
-import { buildPrice } from "../pricing/buildPrice";
-
 import { buildDescription } from "./descriptions/buildDescription";
-
-import { identifyProduct } from "../ai/identifyProduct";
-
-import {
-  cleanText,
-  includesAny,
-  ensureSentence,
-} from "../utils/textHelpers";
-
-import "../pricing/pricingEngine";
-
-import { buildCopyText } from "../listings/buildCopyText";
-
 import { buildListingVariants } from "../listings/buildListingVariants";
-
-import {
-  detectBrand,
-  addBrandToItemName,
-} from "../detection/detectBrand";
-
-import { detectCategory } from "../detection/detectCategory";
-
-import { buildTitle } from "../listings/buildTitle";
-import { buildPriceSource } from "@/pricing/buildPriceSource";
+import { cleanText } from "../utils/textHelpers";
 
 type SaleOutcome = "sellFast" | "balanced" | "mostProfit";
 type MobileView = "input" | "result";
@@ -154,189 +119,8 @@ const listingCategories = [
   "General",
 ];
 
-function hasTone(form: FormData, tone: ToneTag) {
-  return form.toneTags.includes(tone);
-}
-
 function toneText(toneTags: ToneTag[]) {
   return toneTags.length > 0 ? toneTags.join(" + ") : "Neutral default";
-}
-
-function hasSellerEnteredPrice(form: FormData) {
-  return parseAskingPrice(form.askingPrice) !== null;
-}
-
-function seriousOffersLine(hasSellerPrice: boolean) {
-  return hasSellerPrice
-    ? "Price is firm. Serious offers only, please."
-    : "Serious offers only, please.";
-}
-
-function baseItemTitle(form: FormData) {
-  const itemName = cleanText(form.itemName);
-  const brand = detectBrand(itemName);
-
-  if (!itemName) return "Untitled Listing";
-  if (brand) return addBrandToItemName(itemName, brand);
-
-  return itemName;
-}
-
-function isPluralItem(item: string) {
-  const text = item.toLowerCase();
-
-  return (
-    text.includes("speakers") ||
-    text.includes("headphones") ||
-    text.includes("shoes") ||
-    text.includes("boots") ||
-    text.includes("pants") ||
-    text.endsWith("s")
-  );
-}
-
-function itemWords(item: string) {
-  const plural = isPluralItem(item);
-
-  return {
-    subject: plural ? `These ${item}` : `This ${item}`,
-    casualReference: plural ? `these ${item}` : `this ${item}`,
-    pronoun: plural ? "They" : "It",
-    objectPronoun: plural ? "them" : "it",
-    beVerb: plural ? "are" : "is",
-    workVerb: plural ? "work" : "works",
-    needVerb: plural ? "need" : "needs",
-    availablePhrase: plural ? "they’re available" : "it’s available",
-  };
-}
-
-function conditionDescription(condition: string) {
-  if (condition === "New") return "brand new";
-  if (condition === "Like New") return "like-new";
-  if (condition === "Good") return "good";
-  if (condition === "Fair") return "fair";
-  if (condition === "Needs Repair") return "needs repair";
-
-  return "usable";
-}
-
-function shortCondition(condition: string) {
-  if (condition === "New") return "Brand new";
-  if (condition === "Like New") return "Like new";
-  if (condition === "Good") return "Good condition";
-  if (condition === "Fair") return "Fair condition";
-  if (condition === "Needs Repair") return "Needs repair";
-
-  return "Available now";
-}
-
-function conditionSentence(item: string, condition: string) {
-  const words = itemWords(item);
-
-  if (condition === "New") {
-    return `${words.subject} ${words.beVerb} brand new.`;
-  }
-
-  if (condition === "Needs Repair") {
-    return `${words.subject} ${words.needVerb} repair.`;
-  }
-
-  return `${words.subject} ${words.beVerb} in ${conditionDescription(
-    condition,
-  )} condition.`;
-}
-
-function pronounConditionSentence(item: string, condition: string) {
-  const words = itemWords(item);
-
-  if (condition === "New") {
-    return `${words.pronoun} ${words.beVerb} brand new.`;
-  }
-
-  if (condition === "Needs Repair") {
-    return `${words.pronoun} ${words.needVerb} repair.`;
-  }
-
-  return `${words.pronoun} ${words.beVerb} in ${conditionDescription(
-    condition,
-  )} condition.`;
-}
-
-function defaultDetailSentence(item: string, category: string, condition: string) {
-  const words = itemWords(item);
-
-  if (condition === "Needs Repair") {
-    return `Best for someone comfortable fixing ${words.objectPronoun} or using ${words.objectPronoun} for parts.`;
-  }
-
-  if (category === "Electronics") {
-    return `${words.pronoun} ${words.beVerb} ready for the next owner.`;
-  }
-
-  if (category === "Baby / Kids") {
-    return `${words.pronoun} ${words.beVerb} ready for another family to use.`;
-  }
-
-  if (category === "Furniture") {
-    return `${words.pronoun} ${words.beVerb} a practical piece with plenty of use left.`;
-  }
-
-  if (category === "Tools") {
-    return `${words.pronoun} ${words.beVerb} ready to use for your next project.`;
-  }
-
-  if (category === "Clothing") {
-    return `${words.pronoun} ${words.beVerb} ready for the next owner.`;
-  }
-
-  if (category === "Toys") {
-    return `${words.pronoun} ${words.beVerb} ready for someone else to enjoy.`;
-  }
-
-  return `${words.pronoun} ${words.beVerb} available now and ready for the next owner.`;
-}
-
-function conditionWithDetailsOrDefault(
-  item: string,
-  category: string,
-  condition: string,
-  details: string,
-) {
-  const sellerDetails = ensureSentence(details);
-
-  if (sellerDetails) {
-    return `${conditionSentence(item, condition)} ${sellerDetails}`;
-  }
-
-  if (condition === "Needs Repair") {
-    return `${conditionSentence(item, condition)} ${defaultDetailSentence(
-      item,
-      category,
-      condition,
-    )}`;
-  }
-
-  if (category === "Electronics") {
-    return `${conditionSentence(item, condition)} ${defaultDetailSentence(
-      item,
-      category,
-      condition,
-    )}`;
-  }
-
-  if (category === "Baby / Kids") {
-    return `${conditionSentence(item, condition)} ${defaultDetailSentence(
-      item,
-      category,
-      condition,
-    )}`;
-  }
-
-  return `${conditionSentence(item, condition)} ${defaultDetailSentence(
-    item,
-    category,
-    condition,
-  )}`;
 }
 
 function outcomeLabel(outcome: SaleOutcome) {
@@ -349,69 +133,6 @@ function defaultVariantIndex(outcome: SaleOutcome) {
   if (outcome === "sellFast") return 1;
   if (outcome === "mostProfit") return 2;
   return 0;
-}
-
-function outcomeClosing(outcome: SaleOutcome, hasSellerPrice: boolean) {
-  if (outcome === "sellFast") {
-    return "Priced with a quick sale in mind. Message me if interested.";
-  }
-
-  if (outcome === "mostProfit") {
-    return seriousOffersLine(hasSellerPrice);
-  }
-
-  return hasSellerPrice
-    ? "Message me if interested. Serious offers only, please."
-    : "Message me if interested. Reasonable offers considered.";
-}
-
-function variantClosing(form: FormData, variant: VariantId) {
-  const hasSellerPrice = hasSellerEnteredPrice(form);
-
-  if (variant === "fast") {
-    return "Priced to sell. Message me if interested.";
-  }
-
-  if (variant === "value") {
-    return seriousOffersLine(hasSellerPrice);
-  }
-
-  if (variant === "honest") {
-    return "Message me if interested.";
-  }
-
-  return outcomeClosing(form.saleOutcome, hasSellerPrice);
-}
-
-function valuePitch(item: string, category: string) {
-  const words = itemWords(item);
-  const lowerItem = item.toLowerCase();
-
-  if (category === "Electronics" && lowerItem.includes("speaker")) {
-    return `${words.subject} ${words.beVerb} a solid audio upgrade for someone looking for dependable sound without buying new.`;
-  }
-
-  if (category === "Baby / Kids") {
-    return `${words.subject} ${words.beVerb} a practical baby item for someone looking to save money compared with buying new.`;
-  }
-
-  if (category === "Electronics") {
-    return `${words.subject} ${words.beVerb} a solid option for someone looking for a dependable device without buying new.`;
-  }
-
-  if (category === "Furniture") {
-    return `${words.subject} ${words.beVerb} a practical furniture upgrade with plenty of use left.`;
-  }
-
-  if (category === "Tools") {
-    return `${words.subject} ${words.beVerb} a dependable option for someone who needs a useful tool without paying full retail.`;
-  }
-
-  if (category === "Clothing") {
-    return `${words.subject} ${words.beVerb} a good everyday option for the right person.`;
-  }
-
-  return `${words.subject} ${words.beVerb} a solid option for someone looking for this type of item.`;
 }
 
 export default function Home() {
@@ -579,10 +300,10 @@ export default function Home() {
 
     try {
       const variants = await buildListingVariants(form, {
-  buildDescription,
-  outcomeLabel,
-  toneText,
-});
+        buildDescription,
+        outcomeLabel,
+        toneText,
+      });
 
       setListing({
         selectedVariantIndex: defaultVariantIndex(form.saleOutcome),
