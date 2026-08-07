@@ -4,58 +4,20 @@
 
 import { useState } from "react";
 
+import type {
+  FormData,
+  ListingOutput,
+  MobileView,
+  PhotoPreview,
+  SaleOutcome,
+  ToneTag,
+} from "../types/listing";
+
 import { buildDescription } from "./descriptions/buildDescription";
 import { buildListingVariants } from "../listings/buildListingVariants";
 import { cleanText } from "../utils/textHelpers";
 
-type SaleOutcome = "sellFast" | "balanced" | "mostProfit";
-type MobileView = "input" | "result";
-
-type ToneTag =
-  | "Friendly"
-  | "Professional"
-  | "Simple"
-  | "Detailed"
-  | "Confident"
-  | "Casual"
-  | "Trustworthy"
-  | "Short";
-
 type VariantId = "placeholder" | "recommended" | "fast" | "value" | "honest";
-
-type FormData = {
-  itemName: string;
-  condition: string;
-  categoryOverride: string;
-  saleOutcome: SaleOutcome;
-  askingPrice: string;
-  toneTags: ToneTag[];
-  details: string;
-};
-
-type ListingVariant = {
-  id: VariantId;
-  label: string;
-  note: string;
-  title: string;
-  price: string;
-  priceSource: string;
-  category: string;
-  description: string;
-  strategy: string;
-  copyText: string;
-};
-
-type ListingOutput = {
-  selectedVariantIndex: number;
-  variants: ListingVariant[];
-};
-
-type PhotoPreview = {
-  id: string;
-  url: string;
-  name: string;
-};
 
 const maxPhotoCount = 20;
 
