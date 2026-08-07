@@ -22,27 +22,17 @@ import type {
   ToneTag,
 } from "../types/listing";
 
+import {
+  defaultVariantIndex,
+  outcomeLabel,
+  toneText,
+} from "../utils/listingHelpers";
+
 import { buildDescription } from "./descriptions/buildDescription";
 import { buildListingVariants } from "../listings/buildListingVariants";
 import { cleanText } from "../utils/textHelpers";
 
 type VariantId = "placeholder" | "recommended" | "fast" | "value" | "honest";
-
-function toneText(toneTags: ToneTag[]) {
-  return toneTags.length > 0 ? toneTags.join(" + ") : "Neutral default";
-}
-
-function outcomeLabel(outcome: SaleOutcome) {
-  if (outcome === "sellFast") return "Sell Fast";
-  if (outcome === "mostProfit") return "Most Profit";
-  return "Balanced";
-}
-
-function defaultVariantIndex(outcome: SaleOutcome) {
-  if (outcome === "sellFast") return 1;
-  if (outcome === "mostProfit") return 2;
-  return 0;
-}
 
 export default function Home() {
   const [form, setForm] = useState<FormData>(emptyForm);
